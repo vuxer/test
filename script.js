@@ -1,10 +1,5 @@
 var main=function() {
-    if(navigator.userAgent.match(/Android/i)){
-        alert("android");
-    }
-    else {
-        alert("pc");
-    }
+  
 
     $('.icon-menu, img').click(function () {
         $(".menu").animate({
