@@ -13,7 +13,7 @@
 
 }
 body{
-	
+	background-image: url("slika.jpg");
   - background-repeat: no-repeat;
     background-position: center; 
   -webkit-background-size: 100% auto;
