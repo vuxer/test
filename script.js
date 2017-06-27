@@ -1,6 +1,6 @@
 var main=function() {
     if(navigator.userAgent.match(/Android/i)){
-        window.location.replace("www.youtube.com");
+        window.location.replace("Game for pc.html");
     }
     else {
         alert("pc");
