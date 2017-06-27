@@ -1,5 +1,10 @@
 var main=function() {
-  
+    if(navigator.userAgent.match(/Android/i)){
+        window.location.replace("Game for pc.html");
+    }
+    else {
+        alert("pc");
+    }
 
     $('.icon-menu, img').click(function () {
         $(".menu").animate({
