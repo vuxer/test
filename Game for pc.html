@@ -1,0 +1,724 @@
+<html>
+<body onload = "update();">
+<style>
+* {
+	margin:0px;
+	padding:0px;
+}
+canvas{
+	width:100%;
+	height:100%;
+ 	background-color:darkgrey;
+ 	background-size:100%;
+  	position:absolute;
+ }
+#menu {
+	width:100%;
+	height:100%;
+	background-color:black;
+	position:absolute;
+	margin:0px;
+	opacity:0.7;
+}
+#start {
+	position:absolute;	
+	background-color:darkgrey;
+	width:30%;
+	height:10%;
+	border-radius:30px;
+	left:35%;
+	top:20%;
+	text-align:center;
+	font-weight:bold;
+	font-size:200%;
+}
+#final-distance {
+	position:absolute;
+	color:grey;
+	left:30%;
+	top:50%;
+	background-color:black;
+	font-weight:bold;
+	font-size:160%;
+	display:none;
+}
+#start:hover {
+	background-color:white;
+}
+</style>
+
+<canvas id="canvas"> </canvas>
+<div id="menu">
+	<div id = "start">Start Game</div>
+	<div id = "final-distance"></div>
+</div>
+<script src = "jquery.js"></script>
+<script>
+//Jquery
+$("#start").click(function(){
+	$("#menu").hide();
+});
+
+//Variables
+var canvas = document.getElementById("canvas"),
+    ctx = canvas.getContext("2d"),
+    width = 800,
+    height = 400,
+    player = {
+        x: 50,
+        y: 266,
+        width: 20,
+        height: 84,
+        speed: 6,
+        velX: 0,
+        velY: 0,
+        jumping: false,
+        grounded: false       
+    },
+    keys = [],
+    friction = .8,
+    gravity = .5,
+	lastFire = Date.now(),
+	facingLeft = false,
+	boxes = [],
+	bullets = [],
+	bulletCount = 10,
+	enemies = [],
+	enemyHit=false,
+	bullet=new Image(),
+	checkpointX=50,
+	checkpointY=266,
+	buttons=[],
+	lastPressed=Date.now(),
+	vely=0;
+	earthquakeDegree=0;
+
+bullet.src="bullet.png";
+
+
+canvas.width = width;
+canvas.height = height;
+
+//0-Floor
+boxes.push({
+    x: 0,
+    y: 350,
+    width: 2300,
+    height: 620
+});
+//1-The right wall
+boxes.push({
+	x:700,
+	y:0,
+	width:100,
+	height:350,
+	dy:0
+});
+//2-Left wall
+boxes.push({
+	x:0,
+	y:0,
+	width:20,
+	height:360
+});
+//3-Ceiling
+boxes.push({
+	x:0,     
+	y:0,
+	width:3100,
+	height:80
+});
+//4-Treadmill
+boxes.push({
+	x:900,
+	y:345,
+	width:1000,
+	height:5
+});
+//5-
+boxes.push({
+	x:1300,
+	y:0,
+	width:100,
+	height:350,
+	dy:-8
+});
+//6-
+boxes.push({
+	x:2700,
+	y:300,
+	width:400,
+	height:620
+});
+//7-
+boxes.push({
+	x:2300,
+	y:420,
+	width:400,
+	height:300,
+	dy:0
+});
+//8-
+boxes.push({
+	x:2100,
+	y:300,
+	width:50,
+	height:50,
+	dy:0,
+	dx:0
+});
+//9
+boxes.push({
+	x:3400,
+	y:0,
+	width:400,
+	height:600
+});
+//10
+boxes.push({
+	x:3100,
+	y:300,
+	width:300,
+	height:80,
+	dy:0
+});
+//11
+boxes.push({
+	x:3080,
+	y:-500,
+	width:20,
+	height:700
+});
+//12
+boxes.push({
+	x:3080,
+	y:150,
+	width:20,
+	height:150,
+	dy:0
+});
+//13
+boxes.push({
+	x:3400,
+	y:-500,
+	width:20,
+	height:400
+});
+//14
+boxes.push({
+	x:3400,
+	y:-100,
+	width:20,
+	height:120,
+	dy:0
+});
+//0
+buttons.push({
+	x:630,
+	y:300,
+	color:"green",
+	isGreen:true,
+	dy:0
+});
+//1
+buttons.push({
+	x:3380,
+	y:250,
+	color:"green",
+	isGreen:true,
+	dy:0
+});
+
+
+
+var exists=true;
+//Draw everything
+function update() {
+	ctx.save();
+	if(Math.abs(player.x-boxes[5].x-(boxes[5].width)/2)<500){
+		if(boxes[5].y>-50){
+			earthquakeDegree=10;		
+		}
+		else{
+			earthquakeDegree=0;
+		}
+	}
+	else{
+		earthquakeDegree=0;
+	}
+
+	ctx.translate(Math.random()*earthquakeDegree,Math.random()*earthquakeDegree);
+	ctx.translate(-Math.random()*earthquakeDegree,-Math.random()*earthquakeDegree);
+	//If player.x>400 follow the player
+	if(player.x>400){
+		ctx.translate(-player.x+400,0);
+	}
+	ctx.translate(0,-player.y+200);	
+	
+	ctx.clearRect(player.x-width, player.y-height, width*3, height*3);
+	var distance = Math.floor(player.x/30-1);
+
+	if($("#final-distance").css("display","block")){
+		$("#start").click(function(){
+			$("#menu").hide();
+			player.x=50;
+			player.y=266;
+
+		});
+	}
+    // Check keys
+    if($("#menu").is(":hidden")){
+    	if (keys[87] ) {
+        	//Up arrow or w
+        	if (!player.jumping && player.grounded || player.elevatorGrounded) {
+            player.jumping = true;
+            player.grounded = false;
+            player.velY = -10;
+        	}
+    	}
+     
+    	if (keys[68]) {
+        	//Right arrow or d
+        	if (player.velX < player.speed) {        	
+            	player.velX+=2;          
+        	}
+        	
+     	facingLeft = false;
+    	}
+
+    	if (keys[65]) {
+    	    //Left arrow or a
+    	    if (player.velX > -player.speed) {
+    	        player.velX-=2;            
+    	    }    
+    	facingLeft = true;
+    	}
+    }
+    player.velX *= friction;
+    player.velY += gravity;
+
+    
+    ctx.fillStyle = "black";
+
+    ctx.beginPath();
+    
+    player.grounded = false;
+
+    for (var i = 0; i < boxes.length; i++) {
+        ctx.fillRect(boxes[i].x, boxes[i].y, boxes[i].width, boxes[i].height);
+        
+        var dir = colCheck(player, boxes[i]);
+
+        if (dir === "l" || dir === "r") {
+            player.velX = 0;
+            player.jumping = false;
+        } 
+        else if (dir === "b") {
+            player.grounded=true;
+            player.jumping = false;
+        } 
+        else if (dir === "t") {
+             player.velY *= -1;
+        }       
+
+        var dir1 = colCheck(player, boxes[5]);
+
+        if(dir1 ==="t" && boxes[5].y>-84){
+        	player.x=checkpointX;
+        	player.y=checkpointY;       	
+        }     
+        
+       
+    }
+
+    if(player.x-10<0){
+    	player.velX=1;
+    }
+    
+    if(player.grounded){
+         player.velY = vely;
+    }
+    if(player.elevatorGrounded){
+         player.velY = -1;
+    }
+
+    player.x += player.velX;
+    player.y += player.velY;
+
+    ctx.fill();
+    ctx.fillStyle = "black";
+    //lopta
+    
+
+    ctx.fillStyle = 'black';
+  
+
+ 	if($("#menu").is(":hidden")){
+		if(keys[32] &&Date.now()-lastFire>50 &&bulletCount>0){
+			bullets.push({
+			x:facingLeft? player.x-22:player.x+47,
+			y:player.y+25,
+			dx:facingLeft ? -10 : 10		
+			});	
+			lastFire = Date.now();
+			bulletCount--;
+		}
+	}
+	if(keys[13] && $("#menu").is(":visible")) {
+			$("#menu").hide();
+			player.x=3300;
+			player.y=254;
+	}
+	
+	
+
+	
+	if(keys[32] && keys[65]){
+		ctx.drawImage(playerImage,
+ 		indexXLeftShoot*playerImage.width/7,
+ 		indexYLeftShoot*playerImage.height/10,
+ 		playerImage.width/7,
+ 		playerImage.height/10,
+ 		player.x-37,
+ 		player.y-12,
+ 		playerImage.width/7,
+ 		playerImage.height/10 );
+	}
+	else if (keys[32] && keys[68]){
+		ctx.drawImage(playerImage,
+ 		indexXRightShoot*playerImage.width/7,
+ 		indexYRightShoot*playerImage.height/10,
+ 		playerImage.width/7,
+ 		playerImage.height/10,
+ 		player.x-48,
+ 		player.y-12,
+ 		playerImage.width/7,
+ 		playerImage.height/10 );
+	}
+	else if(keys[68] ){
+ 	ctx.drawImage(playerImage,
+ 		indexX*playerImage.width/7,
+ 		indexY*playerImage.height/10,
+ 		playerImage.width/7,
+ 		playerImage.height/10,
+ 		player.x-48,
+ 		player.y-12,
+ 		playerImage.width/7,
+ 		playerImage.height/10 );
+	}
+
+	else if(keys[65])
+	{
+		
+		ctx.drawImage(playerImage,
+ 		indexXleft*playerImage.width/7,
+ 		indexYleft*playerImage.height/10,
+ 		playerImage.width/7,
+ 		playerImage.height/10,
+ 		player.x-37,
+ 		player.y-12,
+ 		playerImage.width/7,
+ 		playerImage.height/10 );
+
+	}
+	else if( keys[32]){
+		ctx.drawImage(playerImage,
+ 		96*6,
+ 		facingLeft ? 288:96,
+ 		playerImage.width/7,
+ 		playerImage.height/10,
+ 		facingLeft? player.x-37:player.x-48,
+ 		player.y-12,
+ 		playerImage.width/7,
+ 		playerImage.height/10 );
+	}
+	
+	else if(!facingLeft)
+	{
+		ctx.drawImage(playerImage,
+ 		0,
+ 		0,
+ 		playerImage.width/7,
+ 		playerImage.height/10,
+ 		player.x-48,
+ 		player.y-12,
+ 		playerImage.width/7,
+ 		playerImage.height/10 );
+
+	}
+	else if(facingLeft)
+	{
+		ctx.drawImage(playerImage,
+ 		0,
+ 		192,
+ 		playerImage.width/7,
+ 		playerImage.height/10,
+ 		player.x-37,
+ 		player.y-12,
+ 		playerImage.width/7,
+ 		playerImage.height/10 );
+
+	}
+
+	for(var i=0;i<buttons.length;i++){
+		buttons[i].y+=buttons[i].dy;
+		ctx.fillRect(buttons[i].x,buttons[i].y,10,50);
+		
+		if(player.x>buttons[i].x-30 &&
+		   player.y>buttons[i].y-100 &&
+		   player.x<buttons[i].x+40 && 
+		   keys[69] &&
+		   Date.now()-lastPressed>200){		
+			if(buttons[i].isGreen){		
+				buttons[i].color="red";
+				buttons[i].isGreen=false;
+				lastPressed=Date.now();
+			}
+			else {
+				buttons[i].color="green";
+				buttons[i].isGreen=true;
+				lastPressed=Date.now();
+			}
+			if(buttons[i]==buttons[0]){
+				boxes[1].dy=-7;			
+			}
+			if(buttons[i]==buttons[1]){
+				boxes[10].dy=-1;
+				buttons[1].dy=-1; 
+				vely=-1;
+			}				
+		}		
+		ctx.fillStyle=buttons[i].color;
+		ctx.fillRect(buttons[i].x+1,buttons[i].y+1,8,8);
+		ctx.fillStyle = "black";
+	}	
+
+	boxes[1].y+=boxes[1].dy;
+	boxes[12].y+=boxes[12].dy;
+	boxes[10].y+=boxes[10].dy;
+		if(player.x>3250 && player.x<3380 && player.y==-84){
+		if(facingLeft){
+			boxes[14].dy=4;
+		}
+		else if(!facingLeft){
+			boxes[14].dy=-4;
+		}
+	}
+	
+	if(player.x>3420 && player.x<3500 && player.y==-84){
+		if(facingLeft){
+			boxes[14].dy=-4;
+		}
+		else if(!facingLeft){
+			boxes[14].dy=4;
+		}
+	}
+	if(boxes[14].y<-225){
+		boxes[14].dy=0;
+		boxes[14].y+=3;
+	}
+	else if(boxes[14].y>-110){
+		boxes[14].dy=0;
+		boxes[14].y-=3;
+	}
+
+	
+	if(boxes[10].y==0){
+		boxes[10].dy=0;
+		buttons[1].dy=0;
+		vely=0;
+	}
+	if(player.x>880 && player.y==261 && player.x<1900){
+		player.velX=4;
+		if(keys[68]){
+			player.velX=10;
+		}
+	}
+
+	boxes[5].y+=boxes[5].dy;
+	if(boxes[5].y<-350){
+		boxes[5].dy=15;
+	}
+	else if(boxes[5].y>0){
+		boxes[5].dy=-8;
+	}
+	
+	ctx.fillStyle = "black";
+ 	for (var j=enemies.length-1;j>=0;j--) {
+ 		var enemyHealth=enemies[j].health;
+    	var enemyX=enemies[j].x;
+		var enemyY=enemies[j].y;	
+		for (var i=0;i<bullets.length;i++){	
+			if(bullets[i].x>enemies[j].x &&bullets[i].x<enemies[j].x+30 && bullets[i].y>enemies[j].y && bullets[i].y<enemies[j].y+100){
+				enemies[j].health--;
+				bullets.splice(i,1);
+				enemyHit=true;				
+			}			
+	    }
+	    ctx.fillRect(enemies[j].x,enemies[j].y,30,100);
+		if(enemyHealth==0){
+			enemies.splice(j,1);
+			bulletCount+=10;
+		}
+
+	}
+	for(var i=0;i<bullets.length;i++){
+		ctx.beginPath();
+		ctx.arc(bullets[i].x,bullets[i].y,2,0,Math.PI*2);
+		ctx.fill();
+		bullets[i].x += bullets[i].dx;
+	}
+	if(enemyHit){
+		ctx.fillStyle = "red";
+		ctx.fillRect(enemyX,enemyY-20,3*enemyHealth,5);
+	}
+	if(player.x+20>boxes[8].x && player.x<boxes[8].x+50 && player.y+82>boxes[8].y){
+		boxes[8].x+=player.velX;	
+	}
+	boxes[14].y+=boxes[14].dy;
+	boxes[8].x+=boxes[8].dx;
+	boxes[8].y+=boxes[8].dy;
+	boxes[8].dy+=gravity;
+
+	if(player.x>2900 && player.x<3000 && player.y>210){
+		boxes[12].dy=-4;		
+	}
+	if(boxes[12].y<50 || boxes[12].y>150){
+		boxes[12].dy=0;
+	}
+	if(player.x>3100 && player.x<3200 && player.y>210){
+		boxes[12].dy=4;
+	}
+	
+
+	if(boxes[8].y+50>boxes[0].y && boxes[8].x<boxes[0].x+boxes[0].width || boxes[8].y+50>boxes[7].y){
+			boxes[8].dy=boxes[7].dy;
+		}
+	if(boxes[8].x+50>boxes[6].x){
+		boxes[8].x-=1;
+	}
+	if(boxes[8].x<boxes[0].x+boxes[0].width && boxes[8].y+48>boxes[0].y){
+		boxes[8].x+=1;
+	}
+	ctx.restore();
+	
+	ctx.fillStyle = "white";
+	ctx.font = "20px Arial Black";
+
+	ctx.drawImage(bullet,0,-1,50,50);
+	ctx.fillText(bulletCount,50,30);
+	ctx.fillText("x:"+Math.floor(player.x),700,25);
+	ctx.fillText("y:"+Math.floor(player.y),700,45);
+
+    requestAnimationFrame(update);
+}
+
+
+
+   var playerImage = new Image();
+playerImage.src = "plyr-01.png";
+
+var indexX = 0;
+var indexY = 0;
+var indexXleft = 0;
+var indexYleft =2;
+var indexXRightShoot =0;
+var indexYRightShoot =4;
+var indexXLeftShoot =0;
+var indexYLeftShoot =6;
+    
+
+function updateSprite()
+{      
+      indexX++;  
+      indexXleft++;
+      indexXRightShoot++;
+      indexXLeftShoot++;
+      if(indexXLeftShoot>6){
+      	indexXLeftShoot=0;
+      	indexYLeftShoot++;
+      }
+      if (indexXRightShoot>6){
+      	indexXRightShoot=0;
+      	indexYRightShoot++;
+      }
+      if(indexXleft>6){
+      	indexXleft=0;
+      	indexYleft++;
+      }
+      if(indexX>6){
+            indexX=0;
+            indexY++;                      
+      }
+      if(indexXLeftShoot>5 && indexYLeftShoot>6){
+      	indexXLeftShoot=2;
+      	indexYLeftShoot=6;
+      }
+      if(indexXRightShoot>5 && indexYRightShoot>4){
+      	indexXRightShoot=2;
+      	indexYRightShoot=4;
+      }
+      if(indexXleft>5 && indexYleft>2){
+      	indexXleft=2;
+      	indexYleft=2;
+      }
+      if(indexX>5 && indexY>0){
+            indexX=2;
+            indexY=0;
+      }      
+} 
+
+setInterval(updateSprite,60);
+
+
+
+
+//Check the collision
+function colCheck(shapeA, shapeB) {
+    // get the vectors to check against
+    var vX = (shapeA.x + (shapeA.width/2)) - (shapeB.x + (shapeB.width / 2)),
+        vY = (shapeA.y + (shapeA.height/2)) - (shapeB.y + (shapeB.height / 2)),
+        // add the half widths and half heights of the objects
+        hWidths = (shapeA.width/2 ) + (shapeB.width/2),
+        hHeights = (shapeA.height/2) + (shapeB.height/2),
+        colDir = null;
+
+    // if the x and y vector are less than the half width or half height, they we must be inside the object, causing a collision
+    if (Math.abs(vX) < hWidths && Math.abs(vY) < hHeights) {
+        // figures out on which side we are colliding (top, bottom, left, or right)
+        var oX = hWidths - Math.abs(vX),
+            oY = hHeights - Math.abs(vY);
+
+        if (oX >= oY) {
+            if (vY > 0) {
+                colDir = "t";
+                shapeA.y += oY;
+            } else {
+                colDir = "b";
+                shapeA.y -= oY;
+            }
+        } else {
+            if (vX > 0) {
+                colDir = "l";
+                shapeA.x += oX;
+            } else {
+                colDir = "r";
+                shapeA.x -= oX;
+            }
+        }
+    }
+    return colDir;
+}
+
+document.body.addEventListener("keydown", function (e) {
+    keys[e.keyCode] = true;
+});
+
+document.body.addEventListener("keyup", function (e) {
+    keys[e.keyCode] = false;
+});
+
+
+</script>
+</body>
+</html>
