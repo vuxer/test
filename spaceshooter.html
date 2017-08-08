@@ -1,0 +1,159 @@
+<html>
+<head>
+<title>Space shooter</title>
+<style>
+* {
+    margin:0;
+}
+canvas {
+    background: url("http://www.ufointernationalproject.com/wp-content/uploads/2017/03/space-03.jpg") no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+</style>
+</head>
+<body>
+<canvas id="canvas" width="1350" height="630"></canvas>
+<script>
+var ctx = document.getElementById("canvas").getContext("2d"),
+    lastShot = Date.now(),
+    fireRate = 10,
+    bullets = [],
+    enemies = [],
+    enemySpeed = 1.5,
+    spawningRate = 300,
+    bulletSpeed = 10,
+    player = {
+        x: 600,
+        y: 250,
+        leftPressed: false,
+        rightPressed: false,
+        upPressed: false,
+        downPressed: false,
+        spacePressed: false,
+        speed: 5
+    };
+var playerImage = new Image();
+playerImage.src = "https://3.bp.blogspot.com/-jGC08Dy0zg8/U405cNq1-MI/AAAAAAAABqU/38d5rmV1S8Y/s1600/redfighter0006.png";
+var enemyImage = new Image();
+enemyImage.src = "https://a.fsdn.com/con/app/proj/partartspace/screenshots/Spaceship14.png/1";
+function drawEnemies() {
+    enemies.forEach(function(enemy){
+        ctx.drawImage(enemyImage, enemy.x, enemy.y, 100,100);
+        enemy.y += enemySpeed;
+    });
+    enemySpeed +=.001;
+}
+function spawnEnemies() {
+    enemies.push({
+        x:Math.floor(Math.random() * 1250) + 1,
+        y:-100
+    });
+}
+setInterval(spawnEnemies, 500);
+function drawBullets() {
+    bullets.forEach(function(bullet){
+        ctx.beginPath();
+        ctx.arc(bullet.x, bullet.y, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = "red";
+        ctx.fill();
+        bullet.y -= bulletSpeed;
+    });
+}
+function collisionDetection() {
+    for (var enemy = 0; enemy < enemies.length; enemy ++){
+        if(player.x < enemies[enemy].x + 80 &&
+           player.x + 80 > enemies[enemy].x &&
+           player.y < enemies[enemy].y + 65 &&
+           player.y + 100  > enemies[enemy].y)
+        {
+            document.location.reload();
+        }
+        if (enemies[enemy].y > canvas.height){
+                enemies.splice(enemy,1);
+                break;
+            }
+        for (var bullet = 0; bullet < bullets.length; bullet ++) {
+            if(bullets[bullet].y < enemies[enemy].y + 70 &&
+               bullets[bullet].y > enemies[enemy].y &&
+               bullets[bullet].x < enemies[enemy].x + 100 &&
+               bullets[bullet].x > enemies[enemy].x)
+            {
+                bullets.splice(bullet, 1);
+                enemies.splice(enemy, 1);
+                break;
+            }
+            if(bullets[bullet].y < -10){
+                bullets.splice(bullet,1);
+                break;
+            }
+        }
+    }
+}
+function update() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(playerImage, player.x,player.y, 100, 100);
+    drawEnemies();
+    drawBullets();
+    collisionDetection();
+    if (player.leftPressed) {
+        player.x -= player.speed;
+    }
+    if (player.rightPressed) {
+        player.x += player.speed;
+    }
+    if (player.upPressed) {
+        player.y -= player.speed;
+    }
+    if (player.downPressed) {
+        player.y += player.speed;
+    }
+    if (player.spacePressed && Date.now() - lastShot > fireRate) {
+        bullets.push({
+            x: player.x+50,
+            y: player.y
+        });
+        lastShot = Date.now();
+    }
+    requestAnimationFrame(update);
+}
+update();
+document.body.addEventListener("keydown", function(e) {
+    if (e.keyCode === 37) {
+        player.leftPressed = true;
+    }
+    else if (e.keyCode === 39) {
+        player.rightPressed = true;
+    }
+    else if (e.keyCode === 38) {
+        player.upPressed = true;
+    }
+    else if (e.keyCode === 40) {
+        player.downPressed = true;
+    }
+    else if (e.keyCode === 32) {
+        player.spacePressed = true;
+    }
+});
+document.body.addEventListener("keyup", function(e) {
+    if (e.keyCode === 37) {
+        player.leftPressed = false;
+    }
+    else if (e.keyCode === 39) {
+        player.rightPressed = false;
+    }
+    else if (e.keyCode === 38) {
+        player.upPressed = false;
+    }
+    else if (e.keyCode === 40) {
+        player.downPressed = false;
+    }
+    else if (e.keyCode === 32) {
+        player.spacePressed = false;
+    }
+});
+</script>
+</body>
+</html>
