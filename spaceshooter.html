@@ -8,10 +8,44 @@
 }
 canvas {
     background: url("http://www.ufointernationalproject.com/wp-content/uploads/2017/03/space-03.jpg") no-repeat center center fixed;
-  -webkit-background-size: cover;
-  -moz-background-size: cover;
-  -o-background-size: cover;
-  background-size: cover;
+     -webkit-background-size: cover;
+     -moz-background-size: cover;
+     -o-background-size: cover;
+     background-size: cover;
+     position:absolute;
+}
+#menu {
+     position:absolute;
+     background: url("http://www.ufointernationalproject.com/wp-content/uploads/2017/03/space-03.jpg") no-repeat center center fixed;
+     -webkit-background-size: cover;
+     -moz-background-size: cover;
+     -o-background-size: cover;
+     background-size: cover;
+     position:absolute;
+     width:1350px;
+     height:630px;
+     z-index:1;
+     text-align:center;
+     font-family: impact;
+}
+#header {
+     color: rgb(200,200,200);
+     font-size:1000%;
+     position:absolute;
+     left:22%;
+     top:30%;
+     animation: blinker .8s linear infinite;
+}
+@keyframes blinker {
+  100% { opacity: 0; }
+}
+#start {
+     color: rgb(200,200,200);
+     font-size:400%;
+     position:absolute;
+     left:30%;
+     top:60%;
+     animation: blinker .8s linear infinite;
 }
 </style>
 </head>
